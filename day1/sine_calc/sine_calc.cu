@@ -12,6 +12,8 @@ __global__ void sine_kernel ( float Period, float * result )
     result[idx] = sinf(2.0f * PI_NUMBER / Period * (float) idx);
 }
 
+typedef float realtype;
+
 #include <stdio.h>
 
 int sine_device( float Period, size_t n, float *result )
@@ -90,7 +92,10 @@ int main ( int argc, char* argv[] )
     float * result = (float*)malloc(nb);
 
     int status = sine_device (Period, n, result);
-    if (status) return status;
+    if (status) {
+      fprintf(stderr, "sine_device returns error\n");
+      return status;
+    }
 
     int imaxdiff = 0;
     float maxdiff = 0.0f;
@@ -98,7 +103,7 @@ int main ( int argc, char* argv[] )
     float maxdiff_bad = 0.0f;
     for (int i = 0; i < n; i++)
     {
-        float gold = original_function(i, Period); 
+        const float gold = original_function(i, Period); 
         float diff = result[i] / gold;
         if (diff != diff) diff = 0; else diff = 1.0 - diff;
         if (diff > maxdiff)
