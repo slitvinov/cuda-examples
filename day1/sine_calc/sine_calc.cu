@@ -23,7 +23,6 @@ __global__ void sine_kernel ( realtype Period, realtype * result )
 int sine_device( realtype Period, size_t n, realtype *result )
 {
   int nb = n * sizeof ( realtype );
-  fprintf(stderr, "nb = %d\n", nb);
   realtype * resultDev = NULL;
 
   // Allocate memory on GPU
@@ -86,6 +85,7 @@ realtype original_function(int i, realtype Period) {
 
 int main ( int argc, char* argv[] )
 {
+  fprintf(stderr, "LOG: ===start sine_calc===\n");
   if (argc != 2)
     {
       printf("Usage: %s <n>\n", argv[0]);
@@ -111,11 +111,13 @@ int main ( int argc, char* argv[] )
 
   realtype * result = (realtype*)malloc(nb);
 
+  fprintf(stderr, "LOG: befor sine_device\n");
   int status = sine_device (Period, n, result);
   if (status) {
     fprintf(stderr, "sine_device returns error\n");
     return status;
   }
+  fprintf(stderr, "LOG: after sine_device\n");
 
   int imaxdiff = 0;
   realtype maxdiff = 0.0;
@@ -136,6 +138,7 @@ int main ( int argc, char* argv[] )
     }
   printf("Max diff = %f% @ i = %d: %f != %f\n",
 	 maxdiff * 100, imaxdiff, maxdiff_bad, maxdiff_good);
+  fprintf(stderr, "LOG: ===finish sine_calc===\n");
   return 0;
 }
 
