@@ -1,6 +1,6 @@
 BLOCK_SIZE = 512
 
-NVCC = nvcc -g -O3 -DBLOCK_SIZE=$(BLOCK_SIZE)
+NVCC = nvcc --compiler-options -Wall -g -O3 -DBLOCK_SIZE=$(BLOCK_SIZE)
 PGF90 = pgf90 -g -O3 -DBLOCK_SIZE=$(BLOCK_SIZE)
 
 all: sum_kernel
