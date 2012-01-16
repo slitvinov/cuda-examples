@@ -2,17 +2,17 @@
 // Perform square matrix multiplication using shared memory
 //
 
-__global__ void matmul2(float* a, float* b, int n, float* c)
+__global__ void matmul2(const float* const a, const float* const b, const int n, float* const c)
 {
     // Base indexes inside A and B
-    int ia = (blockDim.y * blockIdx.y) * n;
-    int ib = blockDim.x * blockIdx.x;
+    const int ia = (blockDim.y * blockIdx.y) * n;
+    const int ib = blockDim.x * blockIdx.x;
     
     // Subindex inside a "tile"
-    int tileidx = n * threadIdx.y + threadIdx.x;
+    const int tileidx = n * threadIdx.y + threadIdx.x;
     
     // Index in C
-    int ic = ia + ib + tileidx;
+    const int ic = ia + ib + tileidx;
 
     float sum = 0.0f;
     int aoff = 0, boff = 0;
