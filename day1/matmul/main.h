@@ -41,7 +41,8 @@ int main(int argc, char* argv[])
     float* b = (float*)malloc(n2b);
     float* c1 = (float*)malloc(n2b);
     float* c2 = (float*)malloc(n2b);
-
+    
+    // create matrices
     double dinvrandmax = 1.0 / RAND_MAX;
     for (int i = 0; i < n2; i++)
     {
@@ -119,11 +120,14 @@ int main(int argc, char* argv[])
 
     // Set kernel launch configuration
     // note pre-given BLOCK_SIZE as a preprocessor macro
-    // dim3 threads...
-    // dim3 blocks...
+    // Set kernel launch configuration
+    dim3 threads(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 blocks( n/threads.x, n/threads.y);
 
     // Launch the kernel (suppose it is named "kernel")
     // ...
+    kernel<<<blocks, threads>>>(adev, bdev, n, cdev);
+
     cuerr = cudaGetLastError();
     if (cuerr != cudaSuccess)
     {

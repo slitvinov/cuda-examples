@@ -4,17 +4,22 @@
 
 __global__ void matmul1 (float* a, float* b, int n, float* c)
 {
+  //  const int idx = threadIdx.x + blockIdx.x * blockDim.x;
 
     // Calculate start indexes for row and column
-    // int ia = ... 
-    // int ib = ... 
-    // int ic = ... 
+    int ia = (blockDim.y * blockIdx.y + threadIdx.y) * n;
+    int ib = blockDim.x * blockIdx.x + threadIdx.x;
+    int ic = ia + ib;
 
+    float sum = 0;
     // Multiply two matrices
-    // for (k = 0 ...
+    for (int k = 0; k < n; k++) {
+      
+      sum += a [ia + k] * b [ib + k * n];
+    }
 
-    // Write resulting sum to global memory
-    // ...
+    // Write the block sub-matrix to global memory;
+    c[ic] = sum; 
 }
 
 #define kernel matmul1
