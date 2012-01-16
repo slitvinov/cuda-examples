@@ -1,4 +1,9 @@
+#ifdef USE_DOUBLE
 typedef double realtype;
+#else
+typedef float realtype;
+#endif
+
 __constant__ realtype PI_NUMBER;
 
 // The kernel to be executed in many threads
@@ -10,8 +15,7 @@ __global__ void sine_kernel ( realtype Period, realtype * result )
 	
   // Do the calculations, corresponding to the thread. Use PI_NUMBER constant!
   // ...
-  //result[idx] = sinf(2.0 * PI_NUMBER / Period * (realtype) idx);
-  result[idx] = 1.0;
+  result[idx] = sin(2.0 * PI_NUMBER / Period * (realtype) idx);
 }
 
 #include <stdio.h>
@@ -120,7 +124,6 @@ int main ( int argc, char* argv[] )
   for (int i = 0; i < n; i++)
     {
       const realtype gold = original_function(i, Period); 
-      fprintf(stdout, "array: %e %e\n", result[i], gold);
       realtype diff = result[i] / gold;
       if (diff != diff) diff = 0; else diff = 1.0 - diff;
       if (diff > maxdiff)
