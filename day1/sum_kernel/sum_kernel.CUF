@@ -1,0 +1,150 @@
+! Kernel is executed on numerous parallel threads.
+attributes(global) subroutine sum_kernel (a, b, c )
+
+    implicit none
+
+    real, device, dimension(*) :: a, b, c
+    integer :: idx
+
+    ! Global thread index.
+    idx = threadIdx%x + (blockIdx%x - 1) * blockDim%x
+
+    ! Perform computations in entire thread.
+    c (idx) = a (idx) + b (idx)
+end
+
+function sum_host (a, b, c, n )
+
+    use cudafor
+    implicit none
+
+    real, dimension(n), intent(in) :: a, b
+    real, dimension(n), intent(out) :: c
+    integer, intent(in) :: n
+
+    real, device, allocatable, dimension(:) :: aDev, bDev, cDev
+    integer :: sum_host, istat
+
+    type(dim3) :: blocks, threads
+
+    sum_host = 1
+    istat = 0
+
+    ! Allocate global memory on GPU.
+    allocate(aDev(n), stat = istat)
+    if (istat .ne. 0) then
+        write(*, *) 'Cannot allocate GPU memory for aDev: ', &
+            cudaGetErrorString(istat)
+        return
+    endif
+    allocate(bDev(n), stat = istat)
+    if (istat .ne. 0) then
+        write(*, *) 'Cannot allocate GPU memory for bDev: ', &
+            cudaGetErrorString(istat)
+        return
+    endif
+    allocate(cDev(n), stat = istat);
+    if (istat .ne. 0) then
+        write(*, *) 'Cannot allocate GPU memory for cDev: ', &
+            cudaGetErrorString(istat)
+        return
+    endif
+
+    ! Setup GPU compute grid configuration.
+    threads = dim3(BLOCK_SIZE, 1, 1);
+    blocks  = dim3(n / BLOCK_SIZE, 1, 1);
+
+    ! Copy input data from host to GPU global memory.
+    aDev = a
+    bDev = b
+
+    ! Execute kernel with the specified config and args.
+    call sum_kernel<<<blocks, threads>>> (aDev, bDev, cDev);
+    istat = cudaGetLastError();
+    if (istat .ne. cudaSuccess) then
+        write(*, *) 'Cannot launch CUDA kernel: ', &
+            cudaGetErrorString(istat)
+        return
+    endif
+    ! Wait for kernel to finish.
+    istat = cudaThreadSynchronize();
+    if (istat .ne. cudaSuccess) then
+        write(*, *) 'Cannot synchronize CUDA kernel: ', &
+            cudaGetErrorString(istat)
+        return
+    endif
+
+    ! Copy results back to the host memory.
+    c = cDev
+
+    ! Release GPU memory.
+    deallocate(aDev)
+    deallocate(bDev)
+    deallocate(cDev)
+
+    sum_host = 0
+    return
+end
+
+program main
+
+    implicit none
+
+    integer :: n, istat, sum_host
+    real, allocatable, dimension(:) :: a, b, c
+
+    character(32) :: argument
+    integer :: i, imaxdiff
+    real :: diff, maxdiff
+
+    if (command_argument_count() .ne. 1) then
+        call get_command_argument(0, argument)
+        write(*, "(A, A, A)") 'Usage: ', trim(argument), ' <n>'
+        write(*, "(A, I)") 'Where n must be a multiplier of ', BLOCK_SIZE
+        call exit(0)
+    endif
+
+    call get_command_argument(1, argument)
+    read (argument, '(I10)') n
+    write(*, "(A, I0)") 'n = ', n
+    if (n .le. 0) then
+        write(*, "(A, I0, A)") 'Invalid n: ', n, ', must be positive'
+        call exit(1)
+    endif
+    if (mod(n, BLOCK_SIZE) .ne. 0) then
+        write(*, "(A, I0, A, I0)") 'Invalid n: ', n, ', must be a multiplier of ', &
+            BLOCK_SIZE
+        call exit(1)
+    endif
+
+    allocate(a(n), b(n), c(n))
+    call random_number(a)
+    call random_number(b)
+
+    istat = sum_host (a, b, c, n)
+    if (istat .ne. 0) call exit(istat)
+
+    imaxdiff = 1
+    maxdiff = 0.0
+    do i = 1, n
+        diff = c(i) / (a(i) + b(i))
+        if (diff .ne. diff) then
+            diff = 0.0
+        else
+            if (diff .gt. 1.0) then
+                diff = 1.0 - 1.0 / diff
+            else
+                diff = 1.0 - diff
+            endif
+        endif
+        if (diff .gt. maxdiff) then
+            maxdiff = diff
+            imaxdiff = i
+        endif
+    enddo
+    write(*, "(A, F0.6, A, I0, A, F0.6, A, F0.6)") &
+        'max diff = ', maxdiff * 100, '% @ i = ', imaxdiff, &
+        ': ', c(imaxdiff), ' != ', a(imaxdiff) + b(imaxdiff)
+    call exit(0)
+end
+

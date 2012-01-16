@@ -1,0 +1,13 @@
+#
+# Simple demo programs, summing two arrays
+# in CUDA C and CUDA Fortran
+#
+
+[marcusmae@noisy sum_kernel]$ ./sum_kernel 2048
+n = 2048
+Max diff = 0.000000% @ i = 0: 1.234571 != 1.234571
+
+[marcusmae@noisy sum_kernel]$ ./sum_kernel_f 2048
+n = 2048
+max diff = 0.000000% @ i = 1: 1.350648 != 1.350648
+
