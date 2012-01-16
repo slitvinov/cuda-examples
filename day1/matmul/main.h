@@ -2,6 +2,7 @@
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 
 void printmat(float* m, int n)
 {
@@ -23,7 +24,8 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    int n = atoi(argv[1]);
+    /// dimension of the matrix
+    const int n = atoi(argv[1]);
     if ((n < BLOCK_SIZE) || (n % BLOCK_SIZE))
     {
         fprintf(stderr, "Invalid n: %d\n", n);
@@ -32,9 +34,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    printf("n = %d\n", n);
-
-    int n2 = n * n, n2b = n2 * sizeof(float);
+    /// number of elements in the matrix
+    const int n2 = n * n;
+    /// size of the matrix in bytes
+    const int n2b = n2 * sizeof(float);
 
     // Allocate host memory
     float* a = (float*)malloc(n2b);
@@ -43,7 +46,7 @@ int main(int argc, char* argv[])
     float* c2 = (float*)malloc(n2b);
     
     // create matrices
-    double dinvrandmax = 1.0 / RAND_MAX;
+    const double dinvrandmax = 1.0 / RAND_MAX;
     for (int i = 0; i < n2; i++)
     {
         a[i] = rand() * dinvrandmax;
@@ -67,7 +70,7 @@ int main(int argc, char* argv[])
             cudaGetErrorString(cuerr));
         return 1;
     }
-    float * cdev = NULL;
+    float* cdev = NULL;
     cuerr = cudaMalloc((void**)&cdev, n2b);
     if (cuerr != cudaSuccess)
     {
@@ -101,6 +104,8 @@ int main(int argc, char* argv[])
             cudaGetErrorString(cuerr));
         return 1;
     }
+    fprintf(stderr, "LOG: adev is created\n");
+
     cuerr = cudaMemcpy(bdev, b, n2b, cudaMemcpyHostToDevice);
     if (cuerr != cudaSuccess)
     {
@@ -108,6 +113,7 @@ int main(int argc, char* argv[])
             cudaGetErrorString(cuerr));
         return 1;
     }
+    fprintf(stderr, "LOG: bdev is created\n");
 
     // Measure time of kernel execution
     cuerr = cudaEventRecord(start, 0);
@@ -121,12 +127,14 @@ int main(int argc, char* argv[])
     // Set kernel launch configuration
     // note pre-given BLOCK_SIZE as a preprocessor macro
     // Set kernel launch configuration
-    dim3 threads(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 blocks( n/threads.x, n/threads.y);
+    const dim3 threads(BLOCK_SIZE, BLOCK_SIZE);
+    std::cerr << "LOG: threads " << threads.x << ' ' << threads.y << ' ' << threads.z << '\n';
+    const dim3 blocks( n/threads.x, n/threads.y);
+    std::cerr << "LOG: blocks " << blocks.x << ' ' << blocks.y << ' ' << blocks.z << '\n';
 
     // Launch the kernel (suppose it is named "kernel")
-    // ...
     kernel<<<blocks, threads>>>(adev, bdev, n, cdev);
+    std::cerr << "LOG: kernel finished\n"; 
 
     cuerr = cudaGetLastError();
     if (cuerr != cudaSuccess)
