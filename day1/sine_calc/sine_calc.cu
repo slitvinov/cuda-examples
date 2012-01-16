@@ -5,38 +5,52 @@ __global__ void sine_kernel ( float Period, float * result )
 {
     // Global thread index
     // ...
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	
     // Do the calculations, corresponding to the thread. Use PI_NUMBER constant!
     // ...
+    result[idx] = sinf(2.0f * PI_NUMBER / Period * (float) idx);
 }
 
 #include <stdio.h>
 
 int sine_device( float Period, size_t n, float *result )
 {
+  int nb = n * sizeof ( float );
+  float * resultDev = NULL;
 
-    // Allocate memory on GPU
-    // cuerr = cudaMalloc(...
+  // Allocate memory on GPU
+  cudaError_t cuerr = cudaMalloc ( (void**)&resultDev, nb );
+
 
     // Send PI number to constant memory PI_NUMBER
     // cuerr = cudaMemcpyToSymbol (...
+    float pi_number = (float)M_PI;
+    cuerr = cudaMemcpyToSymbol ( PI_NUMBER, &pi_number, sizeof(float), 0,  cudaMemcpyHostToDevice );
+
     
     // Set up the kernel launch configuration for n threads 
     // (note BLOCK_SIZE is a pre-defined macro value!)
-   // dim3 threads = ...
-   // dim3 blocks  = ...
+    dim3 threads = dim3(BLOCK_SIZE, 1);
+    dim3 blocks  = dim3(n / BLOCK_SIZE, 1);
 
     // Launch the kernel using the configuration set up before
     // ...    
+    // Copy input data from host to GPU global memory.
+    sine_kernel<<<blocks, threads>>> (Period, resultDev);
+    cuerr = cudaGetLastError();
 
     // Wait the kernel to be finished (cudaDeviceSynchronize)
     // ...
+    cuerr = cudaDeviceSynchronize();
 
     // Copy the results back to CPU memory
     // cuerr = cudaMemcpy (...
+    cuerr = cudaMemcpy ( result, resultDev, nb, cudaMemcpyDeviceToHost );
 
     // Free GPU memory
     // cudaFree (...
+    cudaFree ( resultDev );
 
     return 0;
 }
