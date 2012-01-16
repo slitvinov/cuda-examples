@@ -1,7 +1,8 @@
-__constant__ float PI_NUMBER;
+typedef float realtype;
+__constant__ realtype PI_NUMBER;
 
 // The kernel to be executed in many threads
-__global__ void sine_kernel ( float Period, float * result )
+__global__ void sine_kernel ( realtype Period, realtype * result )
 {
     // Global thread index
     // ...
@@ -9,17 +10,15 @@ __global__ void sine_kernel ( float Period, float * result )
 	
     // Do the calculations, corresponding to the thread. Use PI_NUMBER constant!
     // ...
-    result[idx] = sinf(2.0f * PI_NUMBER / Period * (float) idx);
+    result[idx] = sinf(2.0f * PI_NUMBER / Period * (realtype) idx);
 }
-
-typedef float realtype;
 
 #include <stdio.h>
 
-int sine_device( float Period, size_t n, float *result )
+int sine_device( realtype Period, size_t n, realtype *result )
 {
-  int nb = n * sizeof ( float );
-  float * resultDev = NULL;
+  int nb = n * sizeof ( realtype );
+  realtype * resultDev = NULL;
 
   // Allocate memory on GPU
   cudaError_t cuerr = cudaMalloc ( (void**)&resultDev, nb );
@@ -27,8 +26,8 @@ int sine_device( float Period, size_t n, float *result )
 
     // Send PI number to constant memory PI_NUMBER
     // cuerr = cudaMemcpyToSymbol (...
-    float pi_number = (float)M_PI;
-    cuerr = cudaMemcpyToSymbol ( PI_NUMBER, &pi_number, sizeof(float), 0,  cudaMemcpyHostToDevice );
+    realtype pi_number = (realtype)M_PI;
+    cuerr = cudaMemcpyToSymbol ( PI_NUMBER, &pi_number, sizeof(realtype), 0,  cudaMemcpyHostToDevice );
 
     
     // Set up the kernel launch configuration for n threads 
@@ -60,8 +59,8 @@ int sine_device( float Period, size_t n, float *result )
 #include <malloc.h>
 #include <stdlib.h>
 
-float original_function(int i, float Period) {
-  return sinf(2.0f * float(M_PI) / Period * float(i));
+realtype original_function(int i, realtype Period) {
+  return sinf(2.0f * realtype(M_PI) / Period * realtype(i));
 } 
 
 int main ( int argc, char* argv[] )
@@ -73,7 +72,7 @@ int main ( int argc, char* argv[] )
         return 0;
     }
 
-    int n = atoi(argv[1]), nb = n * sizeof(float);
+    int n = atoi(argv[1]), nb = n * sizeof(realtype);
     printf("n = %d\n", n);
     if (n <= 0)
     {
@@ -87,9 +86,9 @@ int main ( int argc, char* argv[] )
         return 1;
     }
 
-    float Period = 256.0f;
+    realtype Period = 256.0f;
 
-    float * result = (float*)malloc(nb);
+    realtype * result = (realtype*)malloc(nb);
 
     int status = sine_device (Period, n, result);
     if (status) {
@@ -98,13 +97,13 @@ int main ( int argc, char* argv[] )
     }
 
     int imaxdiff = 0;
-    float maxdiff = 0.0f;
-    float maxdiff_good = 0.0f;
-    float maxdiff_bad = 0.0f;
+    realtype maxdiff = 0.0f;
+    realtype maxdiff_good = 0.0f;
+    realtype maxdiff_bad = 0.0f;
     for (int i = 0; i < n; i++)
     {
-        const float gold = original_function(i, Period); 
-        float diff = result[i] / gold;
+        const realtype gold = original_function(i, Period); 
+        realtype diff = result[i] / gold;
         if (diff != diff) diff = 0; else diff = 1.0 - diff;
         if (diff > maxdiff)
         {
