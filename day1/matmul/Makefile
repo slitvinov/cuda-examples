@@ -8,7 +8,7 @@
 BLOCK_SIZE = 16
 
 NVCC = nvcc 
-CFLAGS = -g -O3 -DBLOCK_SIZE=$(BLOCK_SIZE) -lcublas
+CFLAGS = --ptxas-options -v --compiler-options -Wall -g -O0 -lcublas -DBLOCK_SIZE=$(BLOCK_SIZE)
 
 all:  matmul1 matmul2
 
