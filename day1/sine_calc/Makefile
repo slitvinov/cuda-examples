@@ -1,7 +1,7 @@
 BLOCK_SIZE = 512
 
 NVCC = nvcc
-CFLAGS = --ptxas-options -v --compiler-options -Wall -g -O3 -DBLOCK_SIZE=$(BLOCK_SIZE)
+CFLAGS = --ptxas-options -v --compiler-options -Wall -g -O0 -DBLOCK_SIZE=$(BLOCK_SIZE)
 
 all: sine_calc
 
