@@ -11,4 +11,3 @@ sort_by_key: sort_by_key.cu
 
 clean:
 	rm -rf sort_by_key
-
