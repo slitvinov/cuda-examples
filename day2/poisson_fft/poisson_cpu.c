@@ -13,7 +13,7 @@ double s(double x, double y) {
 }
 
 double rho(double x, double y) {
-	double ss = s(x, y);
+	const double ss = s(x, y);
 	return (ss - 2 * sigma2) * exp(-ss / (2 * sigma2)) / sigma4;
 }
 
@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
 	int n = atoi(argv[1]);
 	size_t size = sizeof(double) * n * n;
 
+	fprintf(stderr, "sigma: %f\n", sigma);
 	sigma2 = sigma  * sigma;
 	sigma4 = sigma2 * sigma2;
 
