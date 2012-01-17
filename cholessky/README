@@ -1,0 +1,10 @@
+[dmikushin@tesla-cmc cholessky]$ make
+gcc -g -std=c99 cholessky.c -o cholessky -L../magma/lib -lmagma -lmagmablas -L../lapack -llapack -lblas -lm -lgfortran -L/opt/cuda/lib64 -L/usr/local/cuda/lib64 -lcublas -lstdc++
+[dmikushin@tesla-cmc cholessky]$ ./cholessky 
+Example of symmetric matrix Cholessky decomposition
+./cholessky <n>
+[dmikushin@tesla-cmc cholessky]$ ./cholessky 4096
+Computing on CPU ... OK
+Computing on GPU ... OK
+Done! max diff = 0.000000
+
